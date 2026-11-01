@@ -1,0 +1,4 @@
+openai>=1.30,<3
+qdrant-client>=1.9,<2
+fastapi>=0.110,<1
+hypercorn>=0.16,<1

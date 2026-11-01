@@ -1,0 +1,44 @@
+[
+  {
+    "case_id": "E1-password-reset-paraphrase",
+    "question": "I received several password reset messages. Should I use the newest link, and when does it expire?",
+    "expected_article_id": "ART-101",
+    "expected_insufficient_context": false,
+    "expected_answer_contains": ["latest", "15 minutes"]
+  },
+  {
+    "case_id": "E2-two-factor-recovery-paraphrase",
+    "question": "I lost my authenticator. Can support remove two-factor before the identity check?",
+    "expected_article_id": "ART-102",
+    "expected_insufficient_context": false,
+    "expected_answer_contains": ["identity verification"]
+  },
+  {
+    "case_id": "E3-api-limit-paraphrase",
+    "question": "My client gets HTTP 429 from the public API. How should it retry?",
+    "expected_article_id": "ART-301",
+    "expected_insufficient_context": false,
+    "expected_answer_contains": ["exponential backoff", "jitter"]
+  },
+  {
+    "case_id": "E4-webhook-duplicate-paraphrase",
+    "question": "Could my webhook consumer receive the same event more than once, and how should it handle that?",
+    "expected_article_id": "ART-302",
+    "expected_insufficient_context": false,
+    "expected_answer_contains": ["duplicates", "idempotently"]
+  },
+  {
+    "case_id": "E5-unsupported-ceo-contact",
+    "question": "What is the CEO's direct email address?",
+    "expected_article_id": null,
+    "expected_insufficient_context": true,
+    "expected_answer_contains": []
+  },
+  {
+    "case_id": "E6-unsupported-refund-policy",
+    "question": "How many days do I have to request a refund?",
+    "expected_article_id": null,
+    "expected_insufficient_context": true,
+    "expected_answer_contains": []
+  }
+]
