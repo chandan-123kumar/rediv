@@ -2,6 +2,25 @@
 
 Local, grounded support Q&A with a FastAPI endpoint and a batch pipeline.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  KB["kb/articles.json"] --> CHUNK["retrieval/chunking.py"]
+  CLI["main.py<br/>thin CLI"] --> SERVICE["application/pipeline.py"]
+  API["application/api.py<br/>FastAPI"] --> SERVICE
+  QUESTIONS["questions.json"] --> SERVICE
+  CHUNK --> SERVICE
+  SERVICE --> FACTORY["retrieval/factory.py"]
+  FACTORY -->|"API key set"| HYBRID["BM25 + Qdrant"]
+  FACTORY -->|"no key"| BM25["BM25 only"]
+  HYBRID --> RRF["RRF rerank<br/>top 3"]
+  RRF --> ANSWER["application/answering.py<br/>grounding + citations"]
+  BM25 --> ANSWER
+  ANSWER --> SERVICE
+  SERVICE --> OUT["artifacts/*"]
+```
+
 ## Setup
 
 ```bash
