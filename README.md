@@ -64,6 +64,14 @@ curl -X POST http://127.0.0.1:8000/answer \
 
 The response includes `question_id`, `answer`, `citations`, and `insufficient_context`.
 
+You can send the first sample question and print the JSON response with:
+
+```bash
+uv run python call_api.py
+```
+
+Pass `--question "..."` to send a different question or `--url` to use another endpoint.
+
 ## API evaluation
 
 `eval_cases.json` covers supported paraphrases and unsupported questions. With the server running:
