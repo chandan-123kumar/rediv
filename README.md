@@ -1,59 +1,67 @@
 # Local AI Support Assistant
 
-Small, grounded support Q&A pipeline using the sample local knowledge base.
+Local, grounded support Q&A with a FastAPI endpoint and a batch pipeline.
 
-## Set up with uv
+## Setup
 
 ```bash
 uv sync
 ```
 
-This creates the project virtual environment in `.venv`. The default environment includes FastAPI, Hypercorn, and the OpenAI client; BM25 mode still needs no API key. Install the optional vector database dependency for hybrid mode:
+This creates `.venv`. BM25 mode works without an API key. To enable hybrid BM25 + OpenAI embeddings/Qdrant retrieval:
 
 ```bash
+cp .env.example .env
+# Set OPENAI_API_KEY in .env
 uv sync --extra hybrid
 ```
 
-## Run
+`.env` and the local Qdrant index are git-ignored. `pyproject.toml` is the dependency source of truth; `requirements.txt` is retained for pip users.
+
+## Batch pipeline
 
 ```bash
 uv run python main.py
 uv run python validate.py
 ```
 
-The default path uses BM25 and needs no API key. To enable hybrid BM25 + OpenAI embeddings/Qdrant retrieval, copy `.env.example` to `.env`, set `OPENAI_API_KEY`, and sync with `--extra hybrid`. The `.env` file is ignored by Git. `requirements.txt` remains as a pip compatibility option; `pyproject.toml` is the primary dependency configuration.
+The pipeline writes `index_preview.json`, `retrieval_results.json`, `answers.json`, `eval_summary.json`, and `run_log.jsonl` under `artifacts/`.
 
-## Local API
+## FastAPI
 
-Start the FastAPI application on localhost:
+Start the local server:
 
 ```bash
 uv run hypercorn application.api:app --bind 127.0.0.1:8000
 ```
 
-Send `POST /answer` with `{"question":"Are webhooks delivered exactly once?"}`. The API and batch CLI use the same application service.
+Ask a question:
 
-Evaluate the running API against paraphrases and unsupported questions:
+```bash
+curl -X POST http://127.0.0.1:8000/answer \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Are webhooks delivered exactly once?"}'
+```
+
+The response includes `question_id`, `answer`, `citations`, and `insufficient_context`.
+
+## API evaluation
+
+`eval_cases.json` covers supported paraphrases and unsupported questions. With the server running:
 
 ```bash
 uv run python evaluate_api.py
 ```
 
-This writes `artifacts/api_eval_summary.json`.
-If the environment does not allow a local listening socket, run the same FastAPI routes in-process:
+The summary is written to `artifacts/api_eval_summary.json`. To exercise FastAPI in-process without opening a socket:
 
 ```bash
 RETRIEVAL_FALLBACK_ON_ERROR=true uv run python evaluate_api.py --in-process
 ```
 
-## Artifacts
+## Design notes
 
-The pipeline generates retrieval records, top-three retrieval results, structured answers, an evaluation summary, and a JSONL run log under `artifacts/`.
-
-## Assumptions and tradeoffs
-
-- OpenAI is used only to embed the question and knowledge chunks; answer wording is deterministic and grounded in retrieved text.
-- Qdrant runs locally in embedded mode under `artifacts/qdrant/`; the index is reused when the knowledge base and embedding model are unchanged.
-- With `OPENAI_API_KEY`, BM25 and Qdrant candidates are fused with RRF. Without it, retrieval uses deterministic BM25 only.
-- Article JSON remains the source of truth. Local vectors and index files are generated data.
-- Unsupported questions receive a safe escalation message instead of a guessed answer.
+- With `OPENAI_API_KEY`, BM25 and Qdrant candidate rankings are fused with RRF. Without it, retrieval uses BM25 only.
+- Qdrant runs locally under `artifacts/qdrant/`; its index is reused while the knowledge base and embedding model are unchanged. `kb/articles.json` remains the source of truth.
+- OpenAI is used for embeddings only. Answers are deterministic and grounded in retrieved text; unsupported questions receive a safe refusal.
+- `main.py` is a thin batch entry point. FastAPI, application services, and retrieval code live in separate modules.
